@@ -1,5 +1,5 @@
 body {
-    background-color: #f0f0f0;
+    background-color: #c6e9eebe;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -8,5 +8,5 @@ body {
 }
 
 svg {
-    border: 1px solid #ccc;
+    border: 1px solid #2b89c7;
 }
