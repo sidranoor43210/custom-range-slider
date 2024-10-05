@@ -1,27 +1,75 @@
-const range = document.getElementById('range')
+document.addEventListener("DOMContentLoaded", function() {
+    var select = function(s) {
+        return document.querySelector(s);
+    },
+    dragger = select('#dragger'),
+    display = select('#display'),
+    downText = select('.downText'),
+    upText = select('.upText'),
+    maxDrag = 300;
 
-range.addEventListener('input', (e) => {
-    const value = +e.target.value
-    const label = e.target.nextElementSibling
+    // Initial setup for GSAP
+    TweenMax.set('svg', { visibility: 'visible' });
+    TweenMax.set(upText, { alpha: 0 });
+    
+    // Timeline for the balloon animation
+    var tl = new TimelineMax({ paused: true });
+    tl.addLabel("blobUp")
+        .to(display, 1, { attr: { cy: '-=40', r: 30 } })
+        .to(dragger, 1, { attr: { r: 8 } }, '-=1')
+        .set(dragger, { strokeWidth: 4 }, '-=1')
+        .to(downText, 1, { alpha: 0 }, '-=1')
+        .to(upText, 1, { alpha: 1 }, '-=1')
+        .addPause()
+        .addLabel("blobDown")
+        .to(display, 1, { attr: { cy: 299.5, r: 0 }, ease: Expo.easeOut })
+        .to(dragger, 1, { attr: { r: 15 } }, '-=1')
+        .set(dragger, { strokeWidth: 0 }, '-=1')
+        .to(downText, 1, { alpha: 1 }, '-=1')
+        .to(upText, 0.2, { alpha: 0, attr: { y: '+=5' } }, '-=1');
 
-    const range_width = getComputedStyle(e.target).getPropertyValue('width')
-    const label_width = getComputedStyle(label).getPropertyValue('width')
+    // Draggable setup
+    Draggable.create(dragger, {
+        type: 'x',
+        cursor: 'pointer',
+        throwProps: true,
+        bounds: { minX: 0, maxX: maxDrag },
+        onPress: function() {
+            tl.play('blobUp');
+        },
+        onRelease: function() {
+            tl.play('blobDown');
+        },
+        onDrag: dragUpdate,
+        onThrowUpdate: dragUpdate
+    });
 
-    const num_width = +range_width.substring(0, range_width.length - 2)
-    const num_label_width = +label_width.substring(0, label_width.length - 2)
+    // Function to update slider and display values
+    function dragUpdate() {
+        var dragVal = Math.round((this.x / maxDrag) * 100);
+        downText.textContent = dragVal;
+        upText.textContent = dragVal;
 
-    const max = +e.target.max
-    const min = +e.target.min
+        // Move the balloon display with the dragger
+        TweenMax.set(display, {
+            x: this.x
+        });
 
-    const left = value * (num_width / max) - num_label_width / 2 + scale(value, min, max, 10, -10)
+        // Update text positions
+        TweenMax.set(downText, {
+            x: this.x + 146,
+            y: 304
+        });
+        TweenMax.set(upText, {
+            x: this.x + 145,
+            y: 266
+        });
+    }
 
-    label.style.left = `${left}px`
-
-
-    label.innerHTML = value
-})
-
-// https://stackoverflow.com/questions/10756313/javascript-jquery-map-a-range-of-numbers-to-another-range-of-numbers
-const scale = (num, in_min, in_max, out_min, out_max) => {
-    return (num - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-  }
+    // Initial position for the dragger
+    TweenMax.to(dragger, 1, {
+        x: 0,
+        onUpdate: dragUpdate,
+        ease: Power1.easeInOut
+    });
+});
